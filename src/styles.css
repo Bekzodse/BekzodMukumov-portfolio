@@ -644,6 +644,16 @@ body {
   color: #7a81aa;
   font-size: 1cqw;
 }
+.ai-error {
+  margin-top: 0.65cqw;
+  color: #b3261e;
+  font-size: 1cqw;
+}
+.ai-privacy {
+  margin-top: 0.65cqw;
+  color: #7a81aa;
+  font-size: 0.9cqw;
+}
 
 /* ---------- Slide 4: Education ---------- */
 .slide-education {

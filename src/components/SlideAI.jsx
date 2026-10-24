@@ -255,11 +255,14 @@ function getAnswer(question) {
     : "Iltimos, o‘zingizni ham, meni ham vaqtimizni olmang. Websayt orqali Bekzod haqidagi mavzularga javob beraman, boshqa shaxsiy savollarga javob bermayman.";
 }
 
+const FORMSPREE_ENDPOINT = "https://formspree.io/f/mgaaveyv";
+
 export default function SlideAI({ language, onLanguageChange }) {
   const english = language === "en";
   const [question, setQuestion] = useState("");
   const [answer, setAnswer] = useState(english ? "Hello! Ask a question about Bekzod." : "Assalomu alaykum! Bekzod haqida savol bering.");
   const [isThinking, setIsThinking] = useState(false);
+  const [deliveryError, setDeliveryError] = useState("");
   const answerTimer = useRef(null);
 
   useEffect(() => () => clearTimeout(answerTimer.current), []);
@@ -272,13 +275,42 @@ export default function SlideAI({ language, onLanguageChange }) {
     ));
   }, [english]);
 
-  const ask = (event) => {
+  const ask = async (event) => {
     event.preventDefault();
     const value = question.trim();
     if (!value || isThinking) return;
     clearTimeout(answerTimer.current);
     setIsThinking(true);
+    setDeliveryError("");
     setQuestion("");
+
+    try {
+      const response = await fetch(FORMSPREE_ENDPOINT, {
+        method: "POST",
+        headers: {
+          Accept: "application/json",
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          _subject: "Portfolio AI savoli",
+          question: value,
+          language,
+          page: window.location.href,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error(`Formspree request failed with status ${response.status}`);
+      }
+    } catch (error) {
+      console.error("AI question could not be sent to Formspree.", error);
+      setDeliveryError(
+        english
+          ? "Your question could not be sent. Please try again."
+          : "Savol yuborilmadi. Iltimos, qayta urinib ko‘ring.",
+      );
+    }
+
     answerTimer.current = setTimeout(() => {
       setAnswer(getAnswer(value));
       setIsThinking(false);
@@ -325,6 +357,12 @@ export default function SlideAI({ language, onLanguageChange }) {
             <button type="submit" disabled={isThinking}>{isThinking ? "..." : english ? "Send" : "Yuborish"}</button>
           </form>
           <p className="ai-hint">{english ? "Skills · experience · education · contact" : "Ko‘nikmalar · tajriba · ta’lim · aloqa"}</p>
+          {deliveryError && <p className="ai-error" role="alert">{deliveryError}</p>}
+          <p className="ai-privacy">
+            {english
+              ? "Your question is sent by email to the portfolio owner."
+              : "Savolingiz portfolio egasining email manziliga yuboriladi."}
+          </p>
         </div>
       </div>
       <LanguageToggle language={language} onChange={onLanguageChange} />
